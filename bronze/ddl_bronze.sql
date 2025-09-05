@@ -35,10 +35,9 @@ CREATE TABLE bronze.olist_products_dataset (
     product_name_lenght float,
     product_description_lenght float,
     product_photos_qty float,
-    product_weight_g float,
+    product_weight_g nvarchar(100),
     product_length_cm float,
     product_height_cm float,
-    product_width_cm float
 );
 GO
 
