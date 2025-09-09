@@ -18,6 +18,9 @@ Usage Example:
 ===============================================================================
 */
 
+exec silver.load_silver
+go
+
 create or alter procedure silver.load_silver as 
 begin 
 	declare @start_time datetime, @end_time datetime, @batch_start_time datetime, @batch_end_time datetime;
@@ -31,7 +34,7 @@ begin
 		PRINT '>> Truncating Table: silver.olist_customer_dataset';
 		TRUNCATE TABLE silver.olist_customer_dataset;
 		PRINT '>> Inserting Data Into: silver.olist_customer_dataset ';
-		insert into silver.olist_cumstomer_dataset(
+		insert into silver.olist_customer_dataset(
 			customer_id,
 			customer_unique_id,
 			customer_zip_code,
@@ -39,11 +42,11 @@ begin
 			customer_state
 		)
 		select
-			customer_id,
-			customer_unique_id,
+			trim(customer_id),
+			trim(customer_unique_id),
 			customer_zip_code_prefix,
-			customer_city,
-			customer_state
+			trim(customer_city),
+			trim(customer_state)
 		from bronze.olist_customers_dataset
 		set @end_time = getdate()
 		PRINT '>> Load Duration: ' + CAST(DATEDIFF(SECOND, @start_time, @end_time) AS NVARCHAR) + ' seconds';
@@ -53,7 +56,7 @@ begin
 		SET @start_time = GETDATE();
 		PRINT '>> Truncating Table: silver.olist_orders_dataset';
 		TRUNCATE TABLE silver.olist_orders_dataset;
-		PRINT '>> Inserting Data Into: silver.olist_customer_dataset ';
+		PRINT '>> Inserting Data Into: silver.olist_orders_dataset ';
 		insert into silver.olist_orders_dataset(
 			order_id,
 			customer_id,
@@ -65,9 +68,9 @@ begin
 			order_estimated_delivery_date
 		)
 		select 
-			order_id,
-			customer_id,
-			order_status,
+			trim(order_id),
+			trim(customer_id),
+			trim(order_status),
 			order_purchase_timestamp,
 			order_approved_at,
 			order_delivered_carrier_date,
@@ -92,9 +95,9 @@ begin
 			payment_value
 		)
 		select 
-			order_id,
+			trim(order_id),
 			payment_sequential, 
-			payment_type,
+			trim(payment_type),
 			payment_installments,
 			payment_value
 		from bronze.olist_order_payments_dataset
@@ -106,7 +109,7 @@ begin
 
 		SET @start_time = GETDATE();
 		PRINT '>> Truncating Table: silver.olist_order_items_dataset';
-		TRUNCATE TABLE silver.silver.olist_order_items_dataset;
+		TRUNCATE TABLE silver.olist_order_items_dataset;
 		PRINT '>> Inserting Data Into: silver.olist_order_items_dataset ';
 		insert into silver.olist_order_items_dataset(
 			order_id,
@@ -118,10 +121,10 @@ begin
 			freight_value
 		)
 		select 
-			order_id,
+			trim(order_id),
 			order_item_id,
-			product_id,
-			seller_id,
+			trim(product_id),
+			trim(seller_id),
 			shipping_limit_date, 
 			price,
 			freight_value
@@ -146,12 +149,12 @@ begin
 			product_height_cm
 		)
 		select
-			product_id,
-			product_category_name,
+			trim(product_id),
+			trim(product_category_name),
 			product_name_lenght,
 			product_description_lenght,
 			product_photos_qty,
-			product_weight_g,
+			trim(product_weight_g),
 			product_length_cm,
 			product_height_cm
 		from bronze.olist_products_dataset  
@@ -167,12 +170,12 @@ begin
 		PRINT '==========================================';
 		
 	END TRY
-		BEGIN CATCH
-			PRINT '=========================================='
-			PRINT 'ERROR OCCURED DURING LOADING BRONZE LAYER'
-			PRINT 'Error Message' + ERROR_MESSAGE();
-			PRINT 'Error Message' + CAST (ERROR_NUMBER() AS NVARCHAR);
-			PRINT 'Error Message' + CAST (ERROR_STATE() AS NVARCHAR);
-			PRINT '=========================================='
-		END CATCH
+	BEGIN CATCH
+		PRINT '=========================================='
+		PRINT 'ERROR OCCURED DURING LOADING BRONZE LAYER'
+		PRINT 'Error Message' + ERROR_MESSAGE();
+		PRINT 'Error Message' + CAST (ERROR_NUMBER() AS NVARCHAR);
+		PRINT 'Error Message' + CAST (ERROR_STATE() AS NVARCHAR);
+		PRINT '=========================================='
+	END CATCH
 END
